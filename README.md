@@ -1,25 +1,18 @@
 ## **MTProxy 一键安装管理脚本**
 
-## **原作者项目地址**
-- **https://github.com/Devmiston/sing-box**
+## **本项目包含两个独立的脚本，分别适配Debian/Ubuntu和Alpine，仅在此两种系统中测试使用。
 
-## **修改的地方**
-- **只保留了sing-box最新稳定版的安装方式,自动获取官方最新稳定版**
-- **移除了部分节点协议类型，节点管理中显示节点类型和监听端口**
-- **生成Yaml配置文件，适用于Clash**
-- **生成节点链接，适用于v2rayN**
-- **脚本修改全程由AI完成，难免出现BUG，仅在Debian、Ubuntu系统下测试使用**
+## **✨ 功能特性**
+- **交互式安装：安装过程中会引导您设置自定义端口和伪装域名。**
+- **一键式操作：无论是安装还是卸载，都只需一条命令即可完成。**
+- **稳定可靠：使用兼容性极佳的 mtg v1.0.11 作为代理核心。**
+- **轻量高效：资源占用极低，适合小内存机器使用。**
 
-## **安装**
-### **Debian&&Ubuntu使用以下命令安装依赖**
-```
-apt update && apt -y install curl wget tar jq openssl dnsutils net-tools cron coreutils
-```
 ### **使用以下命令运行脚本**
 
-- **自动创建快捷方式：sb**
+
 ```
-wget -N -O /usr/local/bin/sb.sh https://raw.githubusercontent.com/0xdabiaoge/singbox-lite/main/singbox-lite.sh && chmod +x /usr/local/bin/sb.sh && ln -sf /usr/local/bin/sb.sh /usr/local/bin/sb && sb
+wget -O mtp.sh https://raw.githubusercontent.com/0xdabiaoge/MTPv1.0.11/main/mtp_debian.sh && chmod +x mtp.sh && bash mtp.sh install
 ```
 ## **使用方法**
 - **如果开启ECH配置则不会生成Clash客户端配置文件。**
