@@ -12,26 +12,25 @@
 
 **Debian/Ubuntu**
 ```
-wget -O mtp.sh https://raw.githubusercontent.com/0xdabiaoge/MTPv1.0.11/main/mtp_debian.sh && chmod +x mtp.sh && bash mtp.sh install
+wget -O MTPv1.0.11.sh https://raw.githubusercontent.com/0xdabiaoge/MTPv1.0.11/main/MTPv1.0.11.sh && chmod +x MTPv1.0.11.sh && bash MTPv1.0.11.sh install
 ```
 
 **Alpine**
 ```
-wget -O mtp.sh https://raw.githubusercontent.com/0xdabiaoge/MTPv1.0.11/main/mtp_debian.sh && chmod +x mtp.sh && bash mtp.sh install
+wget -O MTPv1.0.11-Alpine.sh https://raw.githubusercontent.com/0xdabiaoge/MTPv1.0.11/main/MTPv1.0.11-Alpine.sh && chmod +x MTPv1.0.11-Alpine.sh && bash MTPv1.0.11-Alpine.sh install
 ```
 
-## **精简版脚本支持的节点类型（仅保留较为常用的节点协议）**
-- **SOCKS**
-- **VMess (+TCP/WS/gRPC, 可选 TLS)**
-- **VLESS (+TCP/WS, 可选 REALITY)**
-- **TUIC**
-- **Trojan (+TCP/WS/gRPC, 需 TLS)**
-- **Hysteria2**
-- **Shadowsocks**
+**卸载**
 
-## **yaml配置文件模板，可做参考**
-- **脚本生成的yaml配置文件是默认配置，没有其他多余的写法，下面提供了一份包含链式代理的模板可供参考**
-- **[Release](https://github.com/0xdabiaoge/singbox-lite/releases)**
+**Debian/Ubuntu**
+```
+bash MTPv1.0.11.sh uninstall
+```
+
+**Alpine**
+```
+bash MTPv1.0.11-Alpine.sh uninstall
+```
 
 ## **免责声明**
 - **本项目仅供学习与技术交流，请在下载后 24 小时内删除，禁止用于商业或非法目的。**
