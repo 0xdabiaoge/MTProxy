@@ -1,17 +1,20 @@
 ## **MTProxy 一键安装管理脚本**
 
-## 本项目包含两个独立的脚本，分别适配Debian/Ubuntu和Alpine，仅在此两种系统中测试使用。
+## 本项目包含两个独立的脚本，分别适配Debian/CentOS/Ubuntu和Alpine，仅在上述系统中测试使用。
 
 ## **✨ 功能特性**
-- **项目风格：Gemini2.5Pro风格**
+- **项目风格：Gemini2.5Pro**
 - **交互式安装：自定义端口和伪装域名。**
 - **稳定可靠：使用兼容性极佳的 mtg v1.0.11 作为代理核心。**
 - **轻量高效：资源占用极低，适合小内存机器使用。**
+- **稳定守护: 自动根据系统类型配置 systemd (Debian/CentOS/Ubuntu) 或 OpenRC (Alpine) 守护进程，确保服务 7x24 小时稳定运行，并支持开机自启。**
 
 
 ### **使用以下命令运行脚本**
 
-**Debian/Ubuntu**
+**快捷命令：mtp**
+
+**Debian/CentOS/Ubuntu**
 ```
 wget -O MTPv1.0.11.sh https://raw.githubusercontent.com/0xdabiaoge/MTPv1.0.11/main/MTPv1.0.11.sh && chmod +x MTPv1.0.11.sh && bash MTPv1.0.11.sh install
 ```
@@ -19,18 +22,6 @@ wget -O MTPv1.0.11.sh https://raw.githubusercontent.com/0xdabiaoge/MTPv1.0.11/ma
 **Alpine**
 ```
 wget -O MTPv1.0.11-Alpine.sh https://raw.githubusercontent.com/0xdabiaoge/MTPv1.0.11/main/MTPv1.0.11-Alpine.sh && chmod +x MTPv1.0.11-Alpine.sh && bash MTPv1.0.11-Alpine.sh install
-```
-
-**卸载**
-
-**Debian/Ubuntu**
-```
-bash MTPv1.0.11.sh uninstall
-```
-
-**Alpine**
-```
-bash MTPv1.0.11-Alpine.sh uninstall
 ```
 
 ## **免责声明**
