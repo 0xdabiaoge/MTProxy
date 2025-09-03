@@ -16,12 +16,12 @@
 
 **Debian/CentOS/Ubuntu**
 ```
-wget -O MTPv1.0.11.sh https://raw.githubusercontent.com/0xdabiaoge/MTPv1.0.11/main/MTPv1.0.11.sh && chmod +x MTPv1.0.11.sh && bash MTPv1.0.11.sh install
+wget -N -O /usr/local/bin/mtp.sh [https://raw.githubusercontent.com/0xdabiaoge/MTProxy/main/MTP.sh](https://raw.githubusercontent.com/0xdabiaoge/MTProxy/main/MTP.sh) && chmod +x /usr/local/bin/mtp.sh && ln -sf /usr/local/bin/mtp.sh /usr/local/bin/mtp && mtp
 ```
 
 **Alpine**
 ```
-wget -O MTPv1.0.11-Alpine.sh https://raw.githubusercontent.com/0xdabiaoge/MTPv1.0.11/main/MTPv1.0.11-Alpine.sh && chmod +x MTPv1.0.11-Alpine.sh && bash MTPv1.0.11-Alpine.sh install
+wget -N -O /usr/local/bin/mtp.sh [https://raw.githubusercontent.com/0xdabiaoge/MTProxy/main/MTP-Alpine.sh](https://raw.githubusercontent.com/0xdabiaoge/MTProxy/main/MTP-Alpine.sh) && chmod +x /usr/local/bin/mtp.sh && ln -sf /usr/local/bin/mtp.sh /usr/local/bin/mtp && mtp
 ```
 
 ## **免责声明**
