@@ -16,7 +16,7 @@
 
 **Debian/CentOS/Ubuntu**
 ```
-wget -N -O /usr/local/bin/mtp.sh https://raw.githubusercontent.com/0xdabiaoge/MTProxy/main/MTP.sh && chmod +x /usr/local/bin/mtp.sh && ln -sf /usr/local/bin/mtp.sh /usr/local/bin/mtp && mtp
+(curl -LfsS https://raw.githubusercontent.com/0xdabiaoge/MTProxy/main/MTP.sh -o /usr/local/bin/mtp || wget -q https://raw.githubusercontent.com/0xdabiaoge/MTProxy/main/MTP.sh -O /usr/local/bin/mtp) && chmod +x /usr/local/bin/mtp && mtp
 ```
 
 **Alpine**
