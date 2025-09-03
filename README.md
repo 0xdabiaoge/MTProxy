@@ -1,6 +1,6 @@
 ## **MTProxy 一键安装管理脚本**
 
-## 本项目包含两个独立的脚本，分别适配Debian/CentOS/Ubuntu和Alpine，仅在上述系统中测试使用。
+## 两个独立的脚本，分别适配Debian/CentOS/Ubuntu和Alpine，仅在上述系统中测试使用。
 
 ## **✨ 功能特性**
 - **项目风格：Gemini2.5Pro**
