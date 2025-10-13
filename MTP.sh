@@ -291,7 +291,7 @@ show_status() {
 show_menu(){
     clear
     echo "=================================================="
-    echo "     MTProxy 一键安装脚本 (最终无依赖版) "
+    echo "     MTProxy 一键安装脚本  "
     echo "=================================================="
     green "1. 安装 MTProxy"
     green "2. 卸载 MTProxy"
