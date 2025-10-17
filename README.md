@@ -1,19 +1,15 @@
-## **MTProxy 一键安装管理脚本**
-
-## 适配Debian/CentOS/Ubuntu和Alpine，仅在上述系统中测试使用。
+## **MTProxy 多实例管理脚本**
 
 ## **✨ 功能特性**
-- **交互式安装：自定义端口和伪装域名。**
-- **稳定可靠：使用兼容性极佳的 mtg v1.0.11 作为代理核心。**
+- **多实例共存：可以同时安装和管理 `secured` 和 `faketls` 两种模式的代理，互不干扰。**
 - **轻量高效：资源占用极低，适合小内存机器使用。**
-- **稳定守护: 自动根据系统类型配置 systemd (Debian/CentOS/Ubuntu) 或 OpenRC (Alpine) 守护进程，确保服务 7x24 小时稳定运行，并支持开机自启。**
+- **强大的系统兼容性: 完美支持 Debian、Alpine （开机自启动），其他系统暂无测试。同时兼容Docker虚拟化的Debian、Alpine（因为是使用direct，所以重启后需要手动启动MTP服务）**
 
 
 ### **使用以下命令运行脚本**
 
 **快捷命令：mtp**
 
-**Debian/CentOS/Ubuntu/Alpine**
 ```
 (curl -LfsS https://raw.githubusercontent.com/0xdabiaoge/MTProxy/main/MTP.sh -o /usr/local/bin/mtp || wget -q https://raw.githubusercontent.com/0xdabiaoge/MTProxy/main/MTP.sh -O /usr/local/bin/mtp) && chmod +x /usr/local/bin/mtp && mtp
 ```
