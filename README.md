@@ -6,8 +6,9 @@
 - **强大的系统兼容性: 完美支持 Debian、Alpine （开机自启动），其他系统暂无测试。同时兼容Docker虚拟化的Debian、Alpine（因为是使用direct，所以重启后需要手动启动MTP服务）**
 
 ## **脚本界面**
-![我的应用截图](./assets/m1.png)
-
+![m1](png/m1.png)
+![m2](png/m2.png)
+![m3](png/m3.png)
 
 ### **使用以下命令运行脚本**
 
