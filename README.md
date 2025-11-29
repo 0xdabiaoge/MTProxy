@@ -3,13 +3,14 @@
 ## **✨ 功能特性**
 - **多实例共存：可以同时安装和管理 `secured` 和 `faketls` 两种模式的代理，互不干扰。**
 - **轻量高效：资源占用极低，适合小内存机器使用。**
+- **支持Debian、Alpine系统，自带守护程序及开机启动**
 
 ### **使用以下命令运行脚本**
 
 **快捷命令：mtp**
 
 ```
-(curl -LfsS https://raw.githubusercontent.com/0xdabiaoge/MTProxy/main/MTP.sh -o /usr/local/bin/mtp || wget -q https://raw.githubusercontent.com/0xdabiaoge/MTProxy/main/MTP.sh -O /usr/local/bin/mtp) && chmod +x /usr/local/bin/mtp && mtp
+(curl -LfsS https://raw.githubusercontent.com/0xdabiaoge/MTProxy/main/mtp.sh -o /usr/local/bin/mtp || wget -q https://raw.githubusercontent.com/0xdabiaoge/MTProxy/main/mtp.sh -O /usr/local/bin/mtp) && chmod +x /usr/local/bin/mtp && mtp
 ```
 ## **免责声明**
 - **本项目仅供学习与技术交流，请在下载后 24 小时内删除，禁止用于商业或非法目的。**
