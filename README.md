@@ -2,7 +2,7 @@
 
 **全能、极速、完美的 MTProxy 搭建脚本。**
 
-专为生产环境设计，支持 **Debian/Ubuntu** 和 **Alpine Linux** 双系统。独家支持 **Go** (高性能) 和 **Python** (多功能) 双内核自由切换，采用**预编译二进制**模式部署，安装速度快如闪电。
+支持 **Debian/Ubuntu** 和 **Alpine Linux** 双系统。共分为 **Go** (高性能) 和 **Python** (多功能) 双内核自由切换。本脚本采用预编译文件安装，皆由：: [mtg](https://github.com/9seconds/mtg) | [mtprotoproxy](https://github.com/alexbers/mtprotoproxy) 源码优化编译所得。
 
 ## ✨ 核心特性
 
@@ -10,8 +10,8 @@
     *   **Debian / Ubuntu / CentOS**: 完美支持 Systemd 管理。
     *   **Alpine Linux**: 完美支持 OpenRC 管理 (极其省内存，推荐小内存机器使用)。
 *   **🚀 双内核架构**:
-    *   **Go 版 (mtg)**: 推荐首选。内存占用极低，性能强悍，抗重放攻击。
-    *   **Python 版**: 经典版本。支持 **AD TAG** (推广频道) 功能，适合有营销需求的用户。
+    *   **Go 版 (mtg)**: 源码优化版。内存占用极低，性能强悍，抗重放攻击。
+    *   **Python 版**: 源码优化版。支持 **AD TAG** (推广频道) 功能，适合有营销需求的用户。
 *   **🛡 增强型守护**: 
     *   支持开机自启，内置了**进程守护 (Watchdog)** 功能。如果代理进程意外崩溃（如 OOM），系统会在 3 秒内自动重启它，确保持续在线。
 *   **🔧 灵活管理**:
