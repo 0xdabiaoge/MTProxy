@@ -61,11 +61,30 @@ install_base_deps() {
 }
 
 get_public_ip() {
-    curl -s4 https://api.ip.sb/ip -A Mozilla || curl -s4 https://ipinfo.io/ip -A Mozilla
+    curl -s4 --max-time 5 https://api.ip.sb/ip -A Mozilla || curl -s4 --max-time 5 https://ipinfo.io/ip -A Mozilla
 }
 
 get_public_ipv6() {
-    curl -s6 https://api.ip.sb/ip -A Mozilla || curl -s6 https://ifconfig.co/ip -A Mozilla
+    curl -s6 --max-time 5 https://api.ip.sb/ip -A Mozilla || curl -s6 --max-time 5 https://ifconfig.co/ip -A Mozilla
+}
+
+# 预获取 IP，避免最后等待
+prefetch_ips() {
+    echo -e "${BLUE}正在检测服务器 IP (超时 5秒)...${PLAIN}"
+    PUBLIC_IPV4=$(get_public_ip)
+    PUBLIC_IPV6=$(get_public_ipv6)
+    
+    if [ -n "$PUBLIC_IPV4" ]; then
+        echo -e "${GREEN}检测到 IPv4: $PUBLIC_IPV4${PLAIN}"
+    else
+        echo -e "${YELLOW}未检测到 IPv4${PLAIN}"
+    fi
+    
+    if [ -n "$PUBLIC_IPV6" ]; then
+        echo -e "${GREEN}检测到 IPv6: $PUBLIC_IPV6${PLAIN}"
+    else
+        echo -e "${YELLOW}未检测到 IPv6${PLAIN}"
+    fi
 }
 
 generate_secret() {
@@ -88,6 +107,7 @@ select_ip_mode() {
 
 # --- Python 版安装逻辑 ---
 install_mtp_python() {
+    prefetch_ips
     echo -e "${BLUE}正在准备安装 Python 版...${PLAIN}"
     
     ARCH=$(uname -m)
@@ -245,6 +265,7 @@ EOF
 
 # --- Go 版安装逻辑 ---
 install_mtg() {
+    prefetch_ips
     ARCH=$(uname -m)
     case $ARCH in
         x86_64) MTG_ARCH="amd64" ;;
@@ -629,8 +650,13 @@ show_detail_info() {
 
 # --- 信息显示 ---
 show_info_python() {
-    IPV4=$(get_public_ip)
-    IPV6=$(get_public_ipv6)
+    # 使用预获取的 IP
+    IPV4=$PUBLIC_IPV4
+    IPV6=$PUBLIC_IPV6
+    # 如果为空则尝试再次获取
+    [ -z "$IPV4" ] && IPV4=$(get_public_ip)
+    [ -z "$IPV6" ] && IPV6=$(get_public_ipv6)
+    
     IP_MODE=$4
     
     HEX_DOMAIN=$(echo -n "$3" | od -A n -t x1 | tr -d ' \n')
@@ -668,8 +694,13 @@ show_info_python() {
 }
 
 show_info_mtg() {
-    IPV4=$(get_public_ip)
-    IPV6=$(get_public_ipv6)
+    # 使用预获取的 IP
+    IPV4=$PUBLIC_IPV4
+    IPV6=$PUBLIC_IPV6
+    # 如果为空则尝试再次获取
+    [ -z "$IPV4" ] && IPV4=$(get_public_ip)
+    [ -z "$IPV6" ] && IPV6=$(get_public_ipv6)
+    
     IP_MODE=$4
     
     HEX_DOMAIN=$(echo -n "$3" | od -A n -t x1 | tr -d ' \n')
