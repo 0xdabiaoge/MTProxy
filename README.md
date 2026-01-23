@@ -1,4 +1,4 @@
-# MTProxy 一键管理脚本 (Go / Python Rust 三内核版)
+# MTProxy 一键管理脚本 (Go / Python / Rust 三内核版)
 
 **全能、极速、完美的 MTPROTO 搭建脚本。**
 
