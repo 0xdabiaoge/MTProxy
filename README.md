@@ -2,7 +2,7 @@
 
 **全能、极速、完美的 MTPROTO 搭建脚本。**
 
-支持 **Debian/Ubuntu** 和 **Alpine Linux** 双系统。共分为 **Go**、**Rust** 两个不同的版本。本脚本采用预编译文件安装，GO版由： : [mtg](https://github.com/9seconds/mtg)   源码优化编译所得。Rust版属于三者结合体的产物。
+支持 **Debian/Ubuntu** 和 **Alpine Linux** 双系统。共分为 **Go**、**Rust** 两个不同的版本。本脚本采用预编译文件安装，GO版由：  [mtg](https://github.com/9seconds/mtg)   源码优化编译所得。Rust版属于三者结合体的产物。
 
 ## ✨ 核心特性
 
