@@ -962,75 +962,112 @@ format_latency() {
 
 test_dc_latency() {
     echo ""
-    echo -e "${BLUE}╔══════════════════════════════════════════════════╗${PLAIN}"
-    echo -e "${BLUE}║${PLAIN}       Telegram DC 延迟检测 (每DC测试3次取均值)     ${BLUE}║${PLAIN}"
-    echo -e "${BLUE}╠══════════════════════════════════════════════════╣${PLAIN}"
+    echo -e "${BLUE}╔══════════════════════════════════════════════════════════════╗${PLAIN}"
+    echo -e "${BLUE}║${PLAIN}     Telegram 全网段延迟检测 (每段测试3次取均值, TCP:443)     ${BLUE}║${PLAIN}"
+    echo -e "${BLUE}╠══════════════════════════════════════════════════════════════╣${PLAIN}"
     
-    # Telegram 生产环境 DC 地址 (与 Go 源码 telegram/init.go 保持一致)
-    local DC_NAMES=("DC1 美洲" "DC2 欧洲" "DC3 美洲" "DC4 欧洲" "DC5 新加坡")
-    local DC_V4=("149.154.175.50" "149.154.167.51" "149.154.175.100" "149.154.167.91" "149.154.171.5")
-    local DC_V6=("2001:b28:f23d:f001::a" "2001:67c:04e8:f002::a" "2001:b28:f23d:f003::a" "2001:67c:04e8:f004::a" "2001:b28:f23f:f005::a")
+    # Telegram 官方 IPv4 网段及代表性 IP
+    local V4_LABELS=(
+        "91.108.4.0/22"
+        "91.108.8.0/21"
+        "91.108.12.0/22"
+        "91.108.16.0/22"
+        "91.108.20.0/22"
+        "91.108.56.0/22"
+        "149.154.160.0/20"
+        "149.154.164.0/22"
+        "149.154.168.0/22"
+        "149.154.172.0/22"
+        "185.76.151.0/24"
+    )
+    local V4_IPS=(
+        "91.108.4.1"
+        "91.108.8.1"
+        "91.108.12.1"
+        "91.108.16.1"
+        "91.108.20.1"
+        "91.108.56.1"
+        "149.154.160.1"
+        "149.154.164.1"
+        "149.154.168.1"
+        "149.154.172.1"
+        "185.76.151.1"
+    )
     
-    local BEST_DC=""
+    # Telegram 官方 IPv6 网段及代表性 IP
+    local V6_LABELS=(
+        "2001:67c:4e8::/48"
+        "2001:b28:f23d::/48"
+        "2001:b28:f23f::/48"
+        "2a0a:f280::/48"
+    )
+    local V6_IPS=(
+        "2001:67c:4e8::1"
+        "2001:b28:f23d::1"
+        "2001:b28:f23f::1"
+        "2a0a:f280::1"
+    )
+    
+    local BEST_LABEL=""
     local BEST_MS=999999
+    local V4_COUNT=${#V4_IPS[@]}
+    local V6_COUNT=${#V6_IPS[@]}
     
     # IPv4 测试
-    echo -e "${BLUE}║${PLAIN}                                                  ${BLUE}║${PLAIN}"
-    echo -e "${BLUE}║${PLAIN}  ${GREEN}● IPv4 延迟测试${PLAIN}                                  ${BLUE}║${PLAIN}"
-    echo -e "${BLUE}║${PLAIN}                                                  ${BLUE}║${PLAIN}"
+    echo -e "${BLUE}║${PLAIN}                                                              ${BLUE}║${PLAIN}"
+    echo -e "${BLUE}║${PLAIN}  ${GREEN}● IPv4 网段延迟测试 (${V4_COUNT} 个网段)${PLAIN}                             ${BLUE}║${PLAIN}"
+    echo -e "${BLUE}║${PLAIN}                                                              ${BLUE}║${PLAIN}"
     
-    for i in 0 1 2 3 4; do
-        local DC_NAME=${DC_NAMES[$i]}
-        local IP=${DC_V4[$i]}
+    for i in $(seq 0 $((V4_COUNT - 1))); do
+        local LABEL=${V4_LABELS[$i]}
+        local IP=${V4_IPS[$i]}
         
-        printf "${BLUE}\u2551${PLAIN}  测试 DC%d %-8s (%s)..." "$((i+1))" "$DC_NAME" "$IP"
+        printf "${BLUE}\u2551${PLAIN}  测试 %-22s ..." "$LABEL"
         
         local MS=$(tcp_latency_avg "$IP" 443 3)
         local FORMATTED=$(format_latency "$MS")
         
-        # 补全换行显示
-        printf "\r${BLUE}\u2551${PLAIN}  DC%d %-8s  %-18s  延迟: %-14s ${BLUE}\u2551${PLAIN}\n" "$((i+1))" "$DC_NAME" "$IP" "$(echo -e $FORMATTED)"
+        printf "\r${BLUE}\u2551${PLAIN}  %-22s  %-16s  延迟: %-14s ${BLUE}\u2551${PLAIN}\n" "$LABEL" "$IP" "$(echo -e $FORMATTED)"
         
-        # 记录最优 DC
         if [ "$MS" -ge 0 ] 2>/dev/null && [ "$MS" -lt "$BEST_MS" ]; then
             BEST_MS=$MS
-            BEST_DC="DC$((i+1)) $DC_NAME"
+            BEST_LABEL="$LABEL"
         fi
     done
     
     # IPv6 测试
-    echo -e "${BLUE}║${PLAIN}                                                  ${BLUE}║${PLAIN}"
-    echo -e "${BLUE}║${PLAIN}  ${GREEN}● IPv6 延迟测试${PLAIN}                                  ${BLUE}║${PLAIN}"
-    echo -e "${BLUE}║${PLAIN}                                                  ${BLUE}║${PLAIN}"
+    echo -e "${BLUE}║${PLAIN}                                                              ${BLUE}║${PLAIN}"
+    echo -e "${BLUE}║${PLAIN}  ${GREEN}● IPv6 网段延迟测试 (${V6_COUNT} 个网段)${PLAIN}                              ${BLUE}║${PLAIN}"
+    echo -e "${BLUE}║${PLAIN}                                                              ${BLUE}║${PLAIN}"
     
     local HAS_V6=false
     
-    for i in 0 1 2 3 4; do
-        local DC_NAME=${DC_NAMES[$i]}
-        local IP6=${DC_V6[$i]}
+    for i in $(seq 0 $((V6_COUNT - 1))); do
+        local LABEL=${V6_LABELS[$i]}
+        local IP6=${V6_IPS[$i]}
         
-        printf "${BLUE}\u2551${PLAIN}  测试 DC%d %-8s (IPv6)..." "$((i+1))" "$DC_NAME"
+        printf "${BLUE}\u2551${PLAIN}  测试 %-22s ..." "$LABEL"
         
         local MS=$(tcp_latency_avg "$IP6" 443 3)
         local FORMATTED=$(format_latency "$MS")
         
-        printf "\r${BLUE}\u2551${PLAIN}  DC%d %-8s  %-18s  延迟: %-14s ${BLUE}\u2551${PLAIN}\n" "$((i+1))" "$DC_NAME" "IPv6" "$(echo -e $FORMATTED)"
+        printf "\r${BLUE}\u2551${PLAIN}  %-22s  %-16s  延迟: %-14s ${BLUE}\u2551${PLAIN}\n" "$LABEL" "IPv6" "$(echo -e $FORMATTED)"
         
         if [ "$MS" -ge 0 ] 2>/dev/null; then
             HAS_V6=true
             if [ "$MS" -lt "$BEST_MS" ]; then
                 BEST_MS=$MS
-                BEST_DC="DC$((i+1)) $DC_NAME (IPv6)"
+                BEST_LABEL="$LABEL (IPv6)"
             fi
         fi
     done
     
     # 总结
-    echo -e "${BLUE}║${PLAIN}                                                  ${BLUE}║${PLAIN}"
-    echo -e "${BLUE}╠══════════════════════════════════════════════════╣${PLAIN}"
+    echo -e "${BLUE}║${PLAIN}                                                              ${BLUE}║${PLAIN}"
+    echo -e "${BLUE}╠══════════════════════════════════════════════════════════════╣${PLAIN}"
     
-    if [ -n "$BEST_DC" ]; then
-        echo -e "${BLUE}║${PLAIN}  ${GREEN}★ 最优 DC: $BEST_DC (${BEST_MS}ms)${PLAIN}"
+    if [ -n "$BEST_LABEL" ]; then
+        echo -e "${BLUE}║${PLAIN}  ${GREEN}★ 最优网段: $BEST_LABEL (${BEST_MS}ms)${PLAIN}"
     fi
     
     if [ "$HAS_V6" = false ]; then
@@ -1038,7 +1075,7 @@ test_dc_latency() {
     fi
     
     echo -e "${BLUE}║${PLAIN}  ${BLUE}延迟参考: ${GREEN}<100ms 优秀${PLAIN} | ${YELLOW}100-200ms 一般${PLAIN} | ${RED}>200ms 较差${PLAIN}"
-    echo -e "${BLUE}╚══════════════════════════════════════════════════╝${PLAIN}"
+    echo -e "${BLUE}╚══════════════════════════════════════════════════════════════╝${PLAIN}"
     echo ""
 }
 
