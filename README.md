@@ -2,7 +2,7 @@
 
 **全能、极速、完美的 MTPROTO 搭建脚本。**
 
-支持 **Debian/Ubuntu** 和 **Alpine Linux** 双系统。共分为 **Go**、**Rust** 两个不同的版本。本脚本采用预编译二进制文件安装，GO版由：  [mtg](https://github.com/9seconds/mtg) 源码进行重构优化编译所得。Rust版属于自研尝试的版本，目前也处于测试使用状态。telemt（Rust）版由：  [telemt](https://github.com/telemt/telemt)  拉取预编译的二进制文件进行部署 
+支持 **Debian/Ubuntu** 和 **Alpine Linux** 双系统。共分为 **Go**、**Rust** 两个不同的版本。本脚本采用预编译二进制文件安装，GO版由：  [mtg](https://github.com/9seconds/mtg) 源代码重构优化编译所得。telemt（Rust）版由：  [telemt](https://github.com/telemt/telemt) 源代码重写优化编译所得 
 
 ## ✨ 核心特性
 
@@ -11,7 +11,6 @@
     *   **Alpine Linux**: 完美支持 OpenRC 管理 (极其省内存，推荐小内存机器使用)。
 *   **🚀 三内核架构**:
     *   **Go 版 (mtg)**: 源码优化版。内存占用极低，性能强悍，抗重放攻击。
-    *   **Rust 自研版**: 拥有极低的资源占用，在多用户连接的情况下表现比Go版要良好，针对多用户使用
     *   **telemt（Rust）版**: 与自研版性能和资源占用几乎持平，多用户名部署搭建不同的MTProto链接。
 *   **🎯 自选监听模式**: 
     *   **IPV4模式**: 仅支持IPV4地址的出入站连接，并以IPV4地址作为MTPROTO的链接。
@@ -36,7 +35,7 @@
 
 ## 更新日志
 ## 2026.03.01
-**GO版和Rust版重构优化**：GO版和Rust版都各自进行了新一轮的重构优化，GO版优化了之前遗留下来的僵尸链接的问题。Rust版解决了会出现不可用的现象。
+**GO版重构优化**：GO版进行了新一轮的重构优化，GO版优化了之前遗留下来的僵尸链接的问题，多用户连接时会出现内存溢出的问题也得到了修复。
 
 ## 2026.03.03
-**加入telemt（Rust版）**：基于项目：[telemt](https://github.com/telemt/telemt) 进行的部署，该版本主要针对多用户名实现多用户精准管理。
+**加入telemt（Rust版）**：基于项目：[telemt](https://github.com/telemt/telemt) 提供的源代码，进行了一些修复，原版并不支持单用户单端口的模式，改版后支持了单用户单端口，对于临时分享给朋友使用提供了便利，不会对其他用户造成影响，只需要删掉对应用户名即可失效。
