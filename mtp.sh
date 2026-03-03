@@ -413,7 +413,7 @@ install_telemt() {
 
     if [ -n "$LOCAL_BIN" ]; then
         echo -e "${GREEN}检测到本地同级目录已存在预编译二进制: $(basename "$LOCAL_BIN")${PLAIN}"
-        echo -e "${BLUE}跳过在线下载，直接使用本地文件...${PLAIN}"
+        echo -e "${BLUE}跳过在线下载，直接使用本地魔改版发行文件...${PLAIN}"
         cp "$LOCAL_BIN" "$BIN_DIR/telemt"
         chmod +x "$BIN_DIR/telemt"
     else
@@ -428,7 +428,7 @@ install_telemt() {
             return 1
         fi
         chmod +x "$BIN_DIR/telemt"
-        echo -e "${GREEN}Telemt 版下载成功。${PLAIN}"
+        echo -e "${GREEN}Telemt 私有发行版下载成功。${PLAIN}"
     fi
 
     read -p "请输入伪装域名 (默认 www.apple.com): " DOMAIN
@@ -460,6 +460,7 @@ tls = true
 # === Server Binding ===
 [server]
 port = $PORT
+proxy_protocol = true
 
 [[server.listeners]]
 ip = "0.0.0.0"
@@ -472,7 +473,7 @@ ip = \"::\"
 [censorship]
 tls_domain = "$DOMAIN"
 mask = true
-tls_emulation = true
+tls_emulation = false
 
 [access.users]
 $TELEMT_USER = "$SECRET"
@@ -723,6 +724,7 @@ tls = true
 # === Server Binding ===
 [server]
 port = $NEW_PORT
+proxy_protocol = true
 
 [[server.listeners]]
 ip = "0.0.0.0"
@@ -735,7 +737,7 @@ ip = \"::\"
 [censorship]
 tls_domain = "$NEW_DOMAIN"
 mask = true
-tls_emulation = true
+tls_emulation = false
 
 [access.users]
 $USERS_BLOCK
@@ -1215,7 +1217,7 @@ menu() {
     echo -e "${BLUE}                                  |___/ ${PLAIN}${GREEN}Lite Manager${PLAIN}"
     echo -e ""
     echo -e "  ${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${PLAIN}"
-    echo -e "          ${GREEN}MTProxy 管理脚本 v3.0${PLAIN}"
+    echo -e "          ${GREEN}MTProxy 管理脚本 v2.0${PLAIN}"
     echo -e "  ${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${PLAIN}"
     echo -e ""
     echo -e "  系统: ${GREEN}${OS}${PLAIN}  |  模式: ${GREEN}${INIT_SYSTEM}${PLAIN}"
