@@ -142,11 +142,10 @@ check_all_status() {
     echo -e "${BLUE}║        MTProxy 服务状态详情              ║${PLAIN}"
     echo -e "${BLUE}╠══════════════════════════════════════════╣${PLAIN}"
     
-    for SERVICE in mtg mtp-rust telemt; do
+    for SERVICE in mtg telemt; do
         local NAME=""
         case $SERVICE in
             mtg) NAME="Go     版 (mtg)" ;;
-            mtp-rust) NAME="Rust   版" ;;
             telemt) NAME="Telemt 高性能版" ;;
         esac
         
@@ -201,9 +200,8 @@ view_logs() {
     echo ""
     echo -e "${BLUE}请选择要查看的日志:${PLAIN}"
     echo -e "${GREEN}1.${PLAIN} Go 版日志 (mtg)"
-    echo -e "${GREEN}2.${PLAIN} Rust 版日志 (mtp-rust)"
-    echo -e "${GREEN}3.${PLAIN} Telemt 版日志 (telemt)"
-    echo -e "${GREEN}4.${PLAIN} 实时跟踪所有日志"
+    echo -e "${GREEN}2.${PLAIN} Telemt 版日志 (telemt)"
+    echo -e "${GREEN}3.${PLAIN} 实时跟踪所有日志"
     echo -e "${GREEN}0.${PLAIN} 返回主菜单"
     read -p "请选择: " log_choice
     
@@ -217,14 +215,6 @@ view_logs() {
             fi
             ;;
         2)
-            echo -e "${BLUE}=== Rust 版日志 (最近 50 行) ===${PLAIN}"
-            if [[ "$INIT_SYSTEM" == "systemd" ]]; then
-                journalctl -u mtp-rust -n 50 --no-pager
-            else
-                tail -n 50 /var/log/mtp-rust.log 2>/dev/null || echo "日志文件不存在"
-            fi
-            ;;
-        3)
             echo -e "${BLUE}=== Telemt 版日志 (最近 50 行) ===${PLAIN}"
             if [[ "$INIT_SYSTEM" == "systemd" ]]; then
                 journalctl -u telemt -n 50 --no-pager
@@ -232,12 +222,12 @@ view_logs() {
                 tail -n 50 /var/log/telemt.log 2>/dev/null || echo "日志文件不存在"
             fi
             ;;
-        4)
+        3)
             echo -e "${YELLOW}正在实时跟踪日志 (按 Ctrl+C 退出)...${PLAIN}"
             if [[ "$INIT_SYSTEM" == "systemd" ]]; then
-                journalctl -u mtg -u mtp-rust -u telemt -f
+                journalctl -u mtg -u telemt -f
             else
-                tail -f /var/log/mtg.log /var/log/mtp-rust.log /var/log/telemt.log 2>/dev/null
+                tail -f /var/log/mtg.log /var/log/telemt.log 2>/dev/null
             fi
             ;;
         0)
@@ -387,136 +377,6 @@ EOF
     fi
 }
 
-# === Rust 版安装逻辑 ===
-install_mtp_rust() {
-    prefetch_ips
-    echo -e "${BLUE}正在准备安装 Rust 版...${PLAIN}"
-    
-    ARCH=$(uname -m)
-    case $ARCH in
-        x86_64) R_ARCH="amd64" ;;
-        aarch64) R_ARCH="arm64" ;;
-        *) R_ARCH="$ARCH" ;;
-    esac
-    
-    # Rust 版使用通用的 linux 命名（musl 静态链接）
-    TARGET_BIN="mtp-rust-linux-${R_ARCH}"
-    mkdir -p "$BIN_DIR"
-    
-    FOUND_PATH=""
-    if [ -f "./${TARGET_BIN}" ]; then
-        FOUND_PATH="./${TARGET_BIN}"
-    elif [ -f "${SCRIPT_DIR}/${TARGET_BIN}" ]; then
-        FOUND_PATH="${SCRIPT_DIR}/${TARGET_BIN}"
-    fi
-
-    if [ -n "$FOUND_PATH" ]; then
-        echo -e "${GREEN}检测到本地二进制文件: ${FOUND_PATH}${PLAIN}"
-        cp "${FOUND_PATH}" "$BIN_DIR/mtp-rust"
-    else
-        echo -e "${BLUE}未找到本地文件，尝试从 GitHub 下载 (${TARGET_BIN})...${PLAIN}"
-        DOWNLOAD_URL="https://github.com/0xdabiaoge/MTProxy/releases/download/Go-Rust/${TARGET_BIN}"
-        wget -O "$BIN_DIR/mtp-rust" "$DOWNLOAD_URL"
-        if [ $? -ne 0 ]; then
-            echo -e "${RED}下载失败！${PLAIN}"
-            echo -e "${YELLOW}请将以下文件放在脚本同目录:${PLAIN}"
-            echo -e "  - mtp-rust-linux-amd64"
-            echo -e "  - mtp-rust-linux-arm64"
-            return 1
-        fi
-    fi
-    chmod +x "$BIN_DIR/mtp-rust"
-
-    read -p "请输入伪装域名 (默认 www.apple.com): " DOMAIN
-    [ -z "$DOMAIN" ] && DOMAIN="www.apple.com"
-    
-    IP_MODE=$(select_ip_mode)
-
-    read -p "请输入端口 (默认 443): " PORT
-    [ -z "$PORT" ] && PORT=443
-    
-    SECRET=$(generate_secret)
-    echo -e "${GREEN}生成的密钥: $SECRET${PLAIN}"
-    
-    # 构建完整的 ee 密钥
-    HEX_DOMAIN=$(echo -n "$DOMAIN" | od -A n -t x1 | tr -d ' \n')
-    FULL_SECRET="ee${SECRET}${HEX_DOMAIN}"
-    
-    # 保存配置到文件
-    mkdir -p "$CONFIG_DIR"
-    cat > "$CONFIG_DIR/rust.conf" <<EOF
-PORT=$PORT
-SECRET=$FULL_SECRET
-DOMAIN=$DOMAIN
-IP_MODE=$IP_MODE
-EOF
-
-    create_service_rust "$PORT" "$FULL_SECRET" "$IP_MODE"
-    check_service_status mtp-rust
-    show_info_rust "$PORT" "$SECRET" "$DOMAIN" "$IP_MODE"
-}
-
-create_service_rust() {
-    PORT=$1
-    FULL_SECRET=$2
-    IP_MODE=$3
-    
-    EXEC_CMD="$BIN_DIR/mtp-rust -p $PORT -s $FULL_SECRET"
-    
-    if [[ "$IP_MODE" == "v6" ]]; then
-        EXEC_CMD="$EXEC_CMD --prefer-ipv6"
-    fi
-    
-    echo -e "${BLUE}正在创建服务 (Rust)...${PLAIN}"
-    
-    if [[ "$INIT_SYSTEM" == "systemd" ]]; then
-        cat > /etc/systemd/system/mtp-rust.service <<EOF
-[Unit]
-Description=MTProto Proxy (Rust)
-After=network.target
-
-[Service]
-Type=simple
-ExecStart=$EXEC_CMD
-Restart=always
-RestartSec=3
-LimitNOFILE=65535
-Environment="RUST_LOG=info"
-StandardOutput=journal
-StandardError=journal
-
-[Install]
-WantedBy=multi-user.target
-EOF
-        systemctl daemon-reload
-        systemctl enable mtp-rust
-        systemctl restart mtp-rust
-        
-    elif [[ "$INIT_SYSTEM" == "openrc" ]]; then
-        cat > /etc/init.d/mtp-rust <<EOF
-#!/sbin/openrc-run
-name="mtp-rust"
-description="MTProto Proxy (Rust)"
-command="$BIN_DIR/mtp-rust"
-command_args="-p $PORT -s $FULL_SECRET"
-supervisor="supervise-daemon"
-respawn_delay=5
-respawn_max=0
-rc_ulimit="-n 65535"
-pidfile="/run/mtp-rust.pid"
-output_log="/var/log/mtp-rust.log"
-error_log="/var/log/mtp-rust.log"
-
-depend() {
-    need net
-    after firewall
-}
-EOF
-        chmod +x /etc/init.d/mtp-rust
-        rc-update add mtp-rust default
-        rc-service mtp-rust restart
-    fi
-}
 
 # === Telemt 版安装逻辑 ===
 install_telemt() {
@@ -529,33 +389,48 @@ install_telemt() {
     fi
 
     ARCH=$(uname -m)
-    LIBC=$(ldd --version 2>&1 | grep -iq musl && echo musl || echo gnu)
-    
-    # 获取 GitHub 最新版本 tag (如 3.0.15)
-    echo -e "${BLUE}获取 Telemt 最新版本信息...${PLAIN}"
-    LATEST_TAG=$(wget -qO- https://api.github.com/repos/telemt/telemt/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
-    if [ -z "$LATEST_TAG" ]; then
-        echo -e "${RED}获取最新版本失败，尝试默认使用上游 Release 版本${PLAIN}"
-        # Fallback 策略：自己构造一个可能的最新链接，但有可能失败，所以必须提醒
-        LATEST_TAG="3.0.15" 
-    fi
-    echo -e "${GREEN}检测到最新版本: ${LATEST_TAG}${PLAIN}"
-    
-    TARGET_BIN="telemt-${ARCH}-linux-${LIBC}.tar.gz"
-    DOWNLOAD_URL="https://github.com/telemt/telemt/releases/download/${LATEST_TAG}/${TARGET_BIN}"
+    case $ARCH in
+        x86_64) TELEMT_ARCH="amd64" ;;
+        aarch64) TELEMT_ARCH="arm64" ;;
+        *) echo -e "${RED}不支持的架构: $ARCH${PLAIN}"; return 1 ;;
+    esac
     
     mkdir -p "$BIN_DIR"
-    echo -e "${BLUE}正在下载 Telemt ($TARGET_BIN)...${PLAIN}"
     
-    wget -qO- "$DOWNLOAD_URL" | tar -xz -C "$BIN_DIR" 2>/dev/null
+    # 优先检测本地同级目录下是否已有编译好的二进制文件
+    LOCAL_BIN=""
+    TARGET_BIN="telemt-linux-${TELEMT_ARCH}"
     
-    if [ ! -f "$BIN_DIR/telemt" ]; then
-        echo -e "${RED}下载或解压失败！请检查您的网络连接或 GitHub 访问情况。${PLAIN}"
-        return 1
+    if [ -f "./${TARGET_BIN}" ]; then
+        LOCAL_BIN="./${TARGET_BIN}"
+    elif [ -f "${SCRIPT_DIR}/${TARGET_BIN}" ]; then
+        LOCAL_BIN="${SCRIPT_DIR}/${TARGET_BIN}"
+    elif [ -f "./telemt" ]; then
+        LOCAL_BIN="./telemt"
+    elif [ -f "${SCRIPT_DIR}/telemt" ]; then
+        LOCAL_BIN="${SCRIPT_DIR}/telemt"
     fi
-    chmod +x "$BIN_DIR/telemt"
-    echo -e "${GREEN}Telemt 下载成功。${PLAIN}"
-    
+
+    if [ -n "$LOCAL_BIN" ]; then
+        echo -e "${GREEN}检测到本地同级目录已存在预编译二进制: $(basename "$LOCAL_BIN")${PLAIN}"
+        echo -e "${BLUE}跳过在线下载，直接使用本地魔改版发行文件...${PLAIN}"
+        cp "$LOCAL_BIN" "$BIN_DIR/telemt"
+        chmod +x "$BIN_DIR/telemt"
+    else
+        # --- 在线下载逻辑 ---
+        DOWNLOAD_URL="https://github.com/0xdabiaoge/MTProxy/releases/download/Go-Rust/${TARGET_BIN}"
+        
+        echo -e "${BLUE}未找到本地文件，尝试从个人 GitHub 仓库下载 (${TARGET_BIN})...${PLAIN}"
+        wget -qO "$BIN_DIR/telemt" "$DOWNLOAD_URL"
+        
+        if [ $? -ne 0 ] || [ ! -f "$BIN_DIR/telemt" ]; then
+            echo -e "${RED}下载或解压失败！请检查您的网络连接或 GitHub 访问情况。${PLAIN}"
+            return 1
+        fi
+        chmod +x "$BIN_DIR/telemt"
+        echo -e "${GREEN}Telemt 私有发行版下载成功。${PLAIN}"
+    fi
+
     read -p "请输入伪装域名 (默认 www.apple.com): " DOMAIN
     [ -z "$DOMAIN" ] && DOMAIN="www.apple.com"
     
@@ -705,39 +580,6 @@ show_info_telemt() {
     echo -e "=============================="
 }
 
-show_info_rust() {
-    IPV4=$PUBLIC_IPV4
-    IPV6=$PUBLIC_IPV6
-    [ -z "$IPV4" ] && IPV4=$(get_public_ip)
-    [ -z "$IPV6" ] && IPV6=$(get_public_ipv6)
-    
-    IP_MODE=$4
-    
-    HEX_DOMAIN=$(echo -n "$3" | od -A n -t x1 | tr -d ' \n')
-    FULL_SECRET="ee$2$HEX_DOMAIN"
-    
-    echo -e "=============================="
-    echo -e "${GREEN}Rust 版连接信息${PLAIN}"
-    echo -e "端口: $1"
-    echo -e "Secret: $FULL_SECRET"
-    echo -e "Domain: $3"
-    echo -e "------------------------------"
-    
-    if [[ "$IP_MODE" == "v4" || "$IP_MODE" == "dual" ]]; then
-        if [ -n "$IPV4" ]; then
-            echo -e "${GREEN}IPv4 链接:${PLAIN}"
-            echo -e "tg://proxy?server=$IPV4&port=$1&secret=$FULL_SECRET"
-        fi
-    fi
-    
-    if [[ "$IP_MODE" == "v6" || "$IP_MODE" == "dual" ]]; then
-        if [ -n "$IPV6" ]; then
-            echo -e "${GREEN}IPv6 链接:${PLAIN}"
-            echo -e "tg://proxy?server=$IPV6&port=$1&secret=$FULL_SECRET"
-        fi
-    fi
-    echo -e "=============================="
-}
 
 check_service_status() {
     local service=$1
@@ -825,47 +667,6 @@ modify_mtg() {
 
 
 
-modify_rust() {
-    if [ ! -f "$CONFIG_DIR/rust.conf" ]; then
-         echo -e "${YELLOW}未检测到 Rust 版配置文件。${PLAIN}"
-         return
-    fi
-    
-    source "$CONFIG_DIR/rust.conf"
-    CUR_PORT=$PORT
-    CUR_DOMAIN=$DOMAIN
-    CUR_IP_MODE=$IP_MODE
-    
-    echo -e "当前配置 (Rust): 端口=[${GREEN}$CUR_PORT${PLAIN}] 域名=[${GREEN}$CUR_DOMAIN${PLAIN}]"
-    
-    read -p "请输入新端口 (留空保持不变): " NEW_PORT
-    [ -z "$NEW_PORT" ] && NEW_PORT="$CUR_PORT"
-    
-    read -p "请输入新伪装域名 (留空保持不变): " NEW_DOMAIN
-    [ -z "$NEW_DOMAIN" ] && NEW_DOMAIN="$CUR_DOMAIN"
-    
-    if [[ "$NEW_PORT" == "$CUR_PORT" && "$NEW_DOMAIN" == "$CUR_DOMAIN" ]]; then
-        echo -e "${YELLOW}配置未变更。${PLAIN}"
-        return
-    fi
-    
-    NEW_SECRET=$(generate_secret)
-    echo -e "${GREEN}新密钥: $NEW_SECRET${PLAIN}"
-    
-    HEX_DOMAIN=$(echo -n "$NEW_DOMAIN" | od -A n -t x1 | tr -d ' \n')
-    NEW_FULL_SECRET="ee${NEW_SECRET}${HEX_DOMAIN}"
-    
-    cat > "$CONFIG_DIR/rust.conf" <<EOF
-PORT=$NEW_PORT
-SECRET=$NEW_FULL_SECRET
-DOMAIN=$NEW_DOMAIN
-IP_MODE=$CUR_IP_MODE
-EOF
-    
-    create_service_rust "$NEW_PORT" "$NEW_FULL_SECRET" "$CUR_IP_MODE"
-    check_service_status mtp-rust
-    show_info_rust "$NEW_PORT" "$NEW_SECRET" "$NEW_DOMAIN" "$CUR_IP_MODE"
-}
 
 modify_telemt() {
     if [ ! -f "$CONFIG_DIR/telemt.conf" ]; then
@@ -951,13 +752,11 @@ modify_config() {
     echo ""
     echo -e "请选择要修改的服务:"
     echo -e "1. MTProxy (Go 版)"
-    echo -e "2. MTProxy (Rust 自研版)"
-    echo -e "3. MTProxy (Telemt 高性能版)"
-    read -p "请选择 [1-3]: " m_choice
+    echo -e "2. MTProxy (Telemt 高性能版)"
+    read -p "请选择 [1-2]: " m_choice
     case $m_choice in
         1) modify_mtg ;;
-        2) modify_rust ;;
-        3) modify_telemt ;;
+        2) modify_telemt ;;
         *) echo -e "${RED}无效选择${PLAIN}" ;;
     esac
     back_to_menu
@@ -983,22 +782,6 @@ delete_mtg() {
 
 
 
-delete_rust() {
-    echo -e "${RED}正在删除 MTProxy (Rust 版)...${PLAIN}"
-    if [[ "$INIT_SYSTEM" == "systemd" ]]; then
-        systemctl stop mtp-rust 2>/dev/null
-        systemctl disable mtp-rust 2>/dev/null
-        rm -f /etc/systemd/system/mtp-rust.service
-        systemctl daemon-reload
-    else
-        rc-service mtp-rust stop 2>/dev/null
-        rc-update del mtp-rust 2>/dev/null
-        rm -f /etc/init.d/mtp-rust
-    fi
-    rm -f "$BIN_DIR/mtp-rust"
-    rm -f "$CONFIG_DIR/rust.conf"
-    echo -e "${GREEN}Rust 版服务已删除。${PLAIN}"
-}
 
 delete_telemt() {
     echo -e "${RED}正在删除 MTProxy (Telemt 版)...${PLAIN}"
@@ -1022,13 +805,11 @@ delete_config() {
     echo ""
     echo -e "请选择要删除的服务 (仅删除配置和服务，不全盘卸载):"
     echo -e "1. MTProxy (Go 版)"
-    echo -e "2. MTProxy (Rust 自研版)"
-    echo -e "3. MTProxy (Telemt 高性能版)"
-    read -p "请选择 [1-3]: " d_choice
+    echo -e "2. MTProxy (Telemt 高性能版)"
+    read -p "请选择 [1-2]: " d_choice
     case $d_choice in
         1) delete_mtg ;;
-        2) delete_rust ;;
-        3) delete_telemt ;;
+        2) delete_telemt ;;
         *) echo -e "${RED}无效选择${PLAIN}" ;;
     esac
     back_to_menu
@@ -1076,16 +857,6 @@ show_detail_info() {
         else
             echo -e "${YELLOW}未安装或未运行${PLAIN}"
         fi
-    fi
-    
-    echo -e ""
-    echo -e "${BLUE}=== Rust 自研版信息 ===${PLAIN}"
-    if [ -f "$CONFIG_DIR/rust.conf" ]; then
-        source "$CONFIG_DIR/rust.conf"
-        BASE_SECRET=${SECRET:2:32}
-        show_info_rust "$PORT" "$BASE_SECRET" "$DOMAIN" "$IP_MODE"
-    else
-        echo -e "${YELLOW}未安装配置文件${PLAIN}"
     fi
     
     echo -e ""
@@ -1150,7 +921,7 @@ show_info_mtg() {
 control_service() {
     ACTION=$1
     shift
-    TARGETS="mtg mtp-rust telemt"
+    TARGETS="mtg telemt"
     # 如果指定了具体服务名，就只操作那一个
     if [[ -n "$1" ]]; then TARGETS="$1"; fi
     
@@ -1224,6 +995,28 @@ list_telemt_users() {
     echo -e "${GREEN}      Telemt 用户列表及专属分享链接       ${PLAIN}"
     echo -e "==========================================="
     
+    # 读取所有独立端口映射 (存入关联数组)
+    declare -A user_port_map
+    local in_ports=0
+    while IFS= read -r line || [ -n "$line" ]; do
+        if [[ "$line" =~ ^\[access\.user_ports\] ]]; then
+            in_ports=1
+            continue
+        fi
+        if [[ $in_ports -eq 1 && "$line" =~ ^\[.*\] ]]; then
+            in_ports=0
+            continue
+        fi
+        if [[ $in_ports -eq 1 && -n "$line" && ! "$line" =~ ^# ]]; then
+            local pName=$(echo "$line" | cut -d '=' -f 1 | tr -d ' "' | xargs)
+            local pVal=$(echo "$line" | cut -d '=' -f 2 | tr -d ' "' | xargs)
+            if [ -n "$pName" ] && [ -n "$pVal" ]; then
+                user_port_map["$pName"]=$pVal
+            fi
+        fi
+    done < /etc/telemt.toml
+
+    # 遍历所有用户条目输出
     local in_users=0
     while IFS= read -r line || [ -n "$line" ]; do
         if [[ "$line" =~ ^\[access\.users\] ]]; then
@@ -1240,12 +1033,21 @@ list_telemt_users() {
             
             if [ -n "$uName" ] && [ -n "$uSec" ]; then
                  local full_secret="ee${uSec}${HEX_DOMAIN}"
-                 echo -e "👤 用户名: ${YELLOW}$uName${PLAIN}  (密钥: $uSec)"
+                 
+                 # 提取专属专口，没有则退化为全局端口
+                 local link_port=$PORT
+                 local port_lbl="全局共享"
+                 if [ -n "${user_port_map[$uName]}" ]; then
+                     link_port=${user_port_map[$uName]}
+                     port_lbl="专属专线"
+                 fi
+
+                 echo -e "👤 用户名: ${YELLOW}$uName${PLAIN}  (密钥: $uSec | 端口: ${RED}$link_port${PLAIN} [$port_lbl])"
                  if [[ "$IP_MODE" == "v4" || "$IP_MODE" == "dual" ]] && [ -n "$IPV4" ]; then
-                     echo -e "   IPv4: tg://proxy?server=$IPV4&port=$PORT&secret=$full_secret"
+                     echo -e "   IPv4: tg://proxy?server=$IPV4&port=$link_port&secret=$full_secret"
                  fi
                  if [[ "$IP_MODE" == "v6" || "$IP_MODE" == "dual" ]] && [ -n "$IPV6" ]; then
-                     echo -e "   IPv6: tg://proxy?server=$IPV6&port=$PORT&secret=$full_secret"
+                     echo -e "   IPv6: tg://proxy?server=$IPV6&port=$link_port&secret=$full_secret"
                  fi
                  echo -e "-------------------------------------------"
             fi
@@ -1271,11 +1073,38 @@ add_telemt_user() {
         return
     fi
     
+    
+    read -p "请输入要为其分配的专属独立端口 (直接回车表示不独占，使用全局共享端口): " NEW_DEDICATED_PORT
+
+    if [ -n "$NEW_DEDICATED_PORT" ]; then
+        if ! [[ "$NEW_DEDICATED_PORT" =~ ^[0-9]+$ ]] || [ "$NEW_DEDICATED_PORT" -lt 1 ] || [ "$NEW_DEDICATED_PORT" -gt 65535 ]; then
+            echo -e "${RED}端口必须是在 1-65535 之间的合法数字！${PLAIN}"
+            return
+        fi
+        
+        # 强制检查端口冲突 (包含全局端口冲突)
+        if grep -q "port = $NEW_DEDICATED_PORT$" /etc/telemt.toml || grep -E -q "= \"?$NEW_DEDICATED_PORT\"?$" /etc/telemt.toml; then
+            echo -e "${RED}严重冲突：你分配的专属端口已被某个用户或主程序监听征用，请换一个！${PLAIN}"
+            return
+        fi
+        echo -e "${GREEN}为 $NEW_USER 成功锁定独立专享端口: $NEW_DEDICATED_PORT${PLAIN}"
+    fi
+
     NEW_SECRET=$(generate_secret)
-    echo -e "${GREEN}为 $NEW_USER 成功生成密钥: $NEW_SECRET${PLAIN}"
+    echo -e "${GREEN}为 $NEW_USER 成功生成通信密钥: $NEW_SECRET${PLAIN}"
     
     # 插入到 [access.users] 区块的末尾
     sed -i "/^\[access\.users\]/a $NEW_USER = \"$NEW_SECRET\"" /etc/telemt.toml
+
+    # 如果有分配专属端口，则要写入 [access.user_ports] 区域
+    if [ -n "$NEW_DEDICATED_PORT" ]; then
+        # 如果从没有配置过独立端口，则必须先在尾部开辟这个 table 段落
+        if ! grep -q "^\[access\.user_ports\]" /etc/telemt.toml; then
+            echo "" >> /etc/telemt.toml
+            echo "[access.user_ports]" >> /etc/telemt.toml
+        fi
+        sed -i "/^\[access\.user_ports\]/a $NEW_USER = $NEW_DEDICATED_PORT" /etc/telemt.toml
+    fi
     
     echo -e "${BLUE}正在重载配置 ...${PLAIN}"
     control_service restart telemt >/dev/null 2>&1
@@ -1390,44 +1219,42 @@ menu() {
     echo -e "  ${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${PLAIN}"
     echo -e ""
     echo -e "  系统: ${GREEN}${OS}${PLAIN}  |  模式: ${GREEN}${INIT_SYSTEM}${PLAIN}"
-    echo -e "  Go 版: $(get_service_status_str mtg)  Rust 自研版: $(get_service_status_str mtp-rust)  Telemt 版: $(get_service_status_str telemt)"
+    echo -e "  Go 版: $(get_service_status_str mtg)  Telemt 版: $(get_service_status_str telemt)"
     echo -e ""
     echo -e "  ${YELLOW}【安 装】${PLAIN}"
-    echo -e "    ${GREEN}[1]${PLAIN} 安装 Go 版          ${GREEN}[2]${PLAIN} 安装 Rust 自研版"
-    echo -e "    ${GREEN}[3]${PLAIN} 安装 Telemt (Rust进阶版)"
+    echo -e "    ${GREEN}[1]${PLAIN} 安装 Go 版          ${GREEN}[2]${PLAIN} 安装 Telemt (高性能进阶版)"
     echo -e ""
     echo -e "  ${YELLOW}【管 理】${PLAIN}"
-    echo -e "    ${GREEN}[4]${PLAIN} 查看连接信息        ${GREEN}[5]${PLAIN} 修改配置"
-    echo -e "    ${GREEN}[6]${PLAIN} 删除配置            ${GREEN}[7]${PLAIN} Telemt 多用户管理"
+    echo -e "    ${GREEN}[3]${PLAIN} 查看连接信息        ${GREEN}[4]${PLAIN} 修改配置"
+    echo -e "    ${GREEN}[5]${PLAIN} 删除配置            ${GREEN}[6]${PLAIN} Telemt 多用户管理"
     echo -e ""
     echo -e "  ${YELLOW}【状态与日志】${PLAIN}"
-    echo -e "    ${GREEN}[8]${PLAIN} 查看运行状态        ${GREEN}[9]${PLAIN} 查看日志"
+    echo -e "    ${GREEN}[7]${PLAIN} 查看运行状态        ${GREEN}[8]${PLAIN} 查看日志"
     echo -e ""
     echo -e "  ${YELLOW}【服务控制】${PLAIN}"
-    echo -e "    ${GREEN}[10]${PLAIN} 启动服务           ${GREEN}[11]${PLAIN} 停止服务"
-    echo -e "    ${GREEN}[12]${PLAIN} 重启服务"
+    echo -e "    ${GREEN}[9]${PLAIN} 启动服务           ${GREEN}[10]${PLAIN} 停止服务"
+    echo -e "    ${GREEN}[11]${PLAIN} 重启服务"
     echo -e ""
     echo -e "  ${RED}【危险操作】${PLAIN}"
-    echo -e "    ${RED}[13]${PLAIN} 卸载全部并清理"
+    echo -e "    ${RED}[12]${PLAIN} 卸载全部并清理"
     echo -e ""
     echo -e "    ${GREEN}[0]${PLAIN} 退出脚本"
     echo -e ""
-    read -p "  请输入选项 [0-13]: " choice
+    read -p "  请输入选项 [0-12]: " choice
     
     case $choice in
         1) install_base_deps; install_mtg; back_to_menu ;;
-        2) install_base_deps; install_mtp_rust; back_to_menu ;;
-        3) install_base_deps; install_telemt; back_to_menu ;;
-        4) show_detail_info ;;
-        5) modify_config ;;
-        6) delete_config ;;
-        7) manage_telemt_users; back_to_menu ;;
-        8) check_all_status; back_to_menu ;;
-        9) view_logs; back_to_menu ;;
-        10) control_service start; back_to_menu ;;
-        11) control_service stop; back_to_menu ;;
-        12) control_service restart; back_to_menu ;;
-        13) delete_all; exit 0 ;;
+        2) install_base_deps; install_telemt; back_to_menu ;;
+        3) show_detail_info ;;
+        4) modify_config ;;
+        5) delete_config ;;
+        6) manage_telemt_users; back_to_menu ;;
+        7) check_all_status; back_to_menu ;;
+        8) view_logs; back_to_menu ;;
+        9) control_service start; back_to_menu ;;
+        10) control_service stop; back_to_menu ;;
+        11) control_service restart; back_to_menu ;;
+        12) delete_all; exit 0 ;;
         0) echo -e "${GREEN}再见!${PLAIN}"; exit 0 ;;
         *) echo -e "${RED}无效选项${PLAIN}"; sleep 1; menu ;;
     esac
