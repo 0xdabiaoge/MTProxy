@@ -1,14 +1,12 @@
 # MTProxy 一键管理脚本 (Go / Rust 双内核版)
 
-**全能、极速、完美的 MTPROTO 搭建脚本。**
-
-支持 **Debian/Ubuntu** 和 **Alpine Linux** 双系统。共分为 **Go**、**Rust** 两个不同的版本。本脚本采用预编译二进制文件安装，GO版由：  [mtg](https://github.com/9seconds/mtg) 源代码重构优化编译所得。telemt（Rust）版由：  [telemt](https://github.com/telemt/telemt) 源代码重写优化编译所得 
+支持 **Debian/Ubuntu** 和 **Alpine Linux** 双系统。**同时兼容完整KVM和LXC以及更为精简的Docker虚拟化LXC**。共分为 **Go**、**Rust** 两个不同的版本。本脚本采用预编译二进制文件安装，GO版由：  [mtg](https://github.com/9seconds/mtg) 源代码重构优化编译所得。telemt（Rust）版由：  [telemt](https://github.com/telemt/telemt) 源代码重写优化编译所得。
 
 ## ✨ 核心特性
 
-*   **🐧 双系统支持**: 
-    *   **Debian / Ubuntu / CentOS**: 完美支持 Systemd 管理。
-    *   **Alpine Linux**: 完美支持 OpenRC 管理 (极其省内存，推荐小内存机器使用)。
+*   **MTG (Go) — 纯粹与极简的原生体验**:
+    *   **核心定位**： [mtg](https://github.com/9seconds/mtg) 
+    *   **核心定位**：专为追求绝对极简、单人 / 小家庭自用、以及对硬件资源极度受限（如极低配 VPS 或 OpenWrt 软路由）的纯体验派打造。
 *   **🚀 三内核架构**:
     *   **Go 版 (mtg)**: 源码优化版。内存占用极低，性能强悍，抗重放攻击。
     *   **telemt（Rust）版**: 与自研版性能和资源占用几乎持平，多用户名部署搭建不同的MTProto链接。
