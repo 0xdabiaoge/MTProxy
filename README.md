@@ -1,6 +1,6 @@
 # MTProxy 一键管理脚本 (Go / Rust 双内核版)
 
-支持 **Debian/Ubuntu** 和 **Alpine Linux** 双系统。**兼容完整KVM和LXC以及更为精简的Docker虚拟化LXC**。共分为 **Go**、**Rust** 两个不同的版本。本脚本采用预编译二进制文件安装，GO版由：  [mtg](https://github.com/9seconds/mtg) 源代码重构优化编译所得。telemt（Rust）版由：  [telemt](https://github.com/telemt/telemt) 源代码重写优化编译所得。
+支持 **Debian/Ubuntu** 和 **Alpine Linux** 双系统。**兼容完整KVM和LXC以及更为精简的Docker虚拟化LXC。**共分为 **Go**、**Rust** 两个不同的版本。本脚本采用预编译二进制文件安装，GO版由：  [mtg](https://github.com/9seconds/mtg) 源代码重构优化编译所得。telemt（Rust）版由：  [telemt](https://github.com/telemt/telemt) 源代码重写优化编译所得。
 
 ## ✨ 核心特性
 
