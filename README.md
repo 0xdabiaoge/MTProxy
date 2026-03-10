@@ -21,6 +21,13 @@
 (curl -LfsS https://raw.githubusercontent.com/0xdabiaoge/MTProxy/main/mtp.sh -o /usr/local/bin/mtp || wget -q https://raw.githubusercontent.com/0xdabiaoge/MTProxy/main/mtp.sh -O /usr/local/bin/mtp) && chmod +x /usr/local/bin/mtp && mtp
 ```
 
+## 💧 流量配额重置测试
+
+mtp force_reset     # 立即测试流量重置
+mtp                  # 打开管理面板
+mtp check_reset      # Cron 静默检查（日常由 Cron 自动调用）
+
+
 ## 结语
 **基于MTPROTO代理的特性，建议仅自用！仅供测试。**
 
