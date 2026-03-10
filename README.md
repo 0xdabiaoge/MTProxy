@@ -25,8 +25,10 @@
 
 ```mtp force_reset```
 立即测试流量重置
+
 ```mtp```
 打开管理面板
+
 ```mtp check_reset```
 Cron 静默检查（日常由 Cron 自动调用）
 
