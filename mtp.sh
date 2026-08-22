@@ -267,7 +267,26 @@ prefetch_ips() {
 }
 
 generate_secret() {
-    head -c 16 /dev/urandom | od -A n -t x1 | tr -d ' \n'
+    local secret=""
+
+    # Prefer the kernel CSPRNG, but do not continue with an empty/invalid
+    # secret when a restricted container is missing /dev/urandom.
+    if [ -r /dev/urandom ]; then
+        secret=$(od -An -N16 -tx1 /dev/urandom 2>/dev/null | tr -d '[:space:]')
+    fi
+
+    # OpenSSL is a useful fallback on minimal images where the device node is
+    # unavailable but the crypto runtime can still obtain secure randomness.
+    if ! [[ "$secret" =~ ^[0-9a-fA-F]{32}$ ]] && command -v openssl >/dev/null 2>&1; then
+        secret=$(openssl rand -hex 16 2>/dev/null | tr -d '[:space:]')
+    fi
+
+    if ! [[ "$secret" =~ ^[0-9a-fA-F]{32}$ ]]; then
+        echo -e "${RED}无法生成安全的 32 位十六进制密钥，请检查 /dev/urandom 或 openssl。${PLAIN}" >&2
+        return 1
+    fi
+
+    printf '%s\n' "$secret"
 }
 
 # --- IP 模式选择 ---
@@ -509,7 +528,10 @@ install_mtg() {
     fi
     PORT_V6="$PORT"
 
-    SECRET=$(generate_secret)
+    SECRET=$(generate_secret) || {
+        echo -e "${RED}密钥生成失败，已取消 Go 版安装。${PLAIN}"
+        return 1
+    }
     echo -e "${GREEN}生成的密钥: $SECRET${PLAIN}"
 
     create_service_mtg "$PORT" "$SECRET" "$DOMAIN" "$IP_MODE" "$PORT_V6"
@@ -675,7 +697,10 @@ install_telemt() {
         return 1
     fi
 
-    SECRET=$(generate_secret)
+    SECRET=$(generate_secret) || {
+        echo -e "${RED}密钥生成失败，已取消 Telemt 安装。${PLAIN}"
+        return 1
+    }
     echo -e "${GREEN}生成的客户端连接密钥: $SECRET${PLAIN}"
 
     echo ""
@@ -1000,7 +1025,10 @@ modify_mtg() {
     fi
 
     echo -e "${BLUE}正在更新配置...${PLAIN}"
-    NEW_SECRET=$(generate_secret)
+    NEW_SECRET=$(generate_secret) || {
+        echo -e "${RED}密钥生成失败，已取消 Go 版配置修改。${PLAIN}"
+        return 1
+    }
     echo -e "${GREEN}新生成的密钥: $NEW_SECRET${PLAIN}"
 
     create_service_mtg "$NEW_PORT" "$NEW_SECRET" "$NEW_DOMAIN" "$CUR_IP_MODE"
@@ -1523,7 +1551,10 @@ add_telemt_user() {
         echo -e "${GREEN}为 $NEW_USER 成功锁定独立专享端口: $NEW_DEDICATED_PORT${PLAIN}"
     fi
 
-    NEW_SECRET=$(generate_secret)
+    NEW_SECRET=$(generate_secret) || {
+        echo -e "${RED}密钥生成失败，已取消添加用户。${PLAIN}"
+        return
+    }
     echo -e "${GREEN}为 $NEW_USER 成功生成通信密钥: $NEW_SECRET${PLAIN}"
 
     echo ""
